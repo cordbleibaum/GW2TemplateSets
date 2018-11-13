@@ -66,4 +66,5 @@ extern "C" __declspec(dllexport) void* get_release_addr();
 arcdps_exports* mod_init();
 uintptr_t mod_release();
 uintptr_t mod_wnd_filter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+uintptr_t mod_wnd_nofilter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 uintptr_t mod_imgui(uint32_t not_charsel_or_loading);
