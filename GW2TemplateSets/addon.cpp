@@ -128,20 +128,20 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 			ImGui::ListBox("", &selected, directories, IM_ARRAYSIZE(directories));
 		}
 
-		if(ImGui::Button("Load")) {
+		if(ImGui::Button("Load") && !directoryStrings.empty()) {
 			std::string folder = std::string(directories[selected]);
 			std::filesystem::remove_all("addons/arcdps/arcdps.templates/");
 			std::filesystem::copy("addons/templatesets/" + folder, "addons/arcdps/arcdps.templates", std::filesystem::copy_options::recursive);
 		}
 		ImGui::SameLine();
-		if(ImGui::Button("Overwrite")) {
+		if(ImGui::Button("Overwrite") && !directoryStrings.empty()) {
 			std::string folder = std::string(directories[selected]);
 			std::filesystem::remove_all("addons/templatesets/" + folder);
 			std::filesystem::copy("addons/arcdps/arcdps.templates", "addons/templatesets/" + folder, std::filesystem::copy_options::recursive);
 			rebuildSets();
 		}
 		ImGui::SameLine();
-		if(ImGui::Button("Delete")) {
+		if(ImGui::Button("Delete") && !directoryStrings.empty()) {
 			std::string folder = std::string(directories[selected]);
 			std::filesystem::remove_all("addons/templatesets/" + folder);
 			rebuildSets();
