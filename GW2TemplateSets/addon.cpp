@@ -152,13 +152,15 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 		if (ImGui::Button("Save"))
 		{
 			std::string folder = std::string(setNameBuf);
-			if (std::filesystem::exists("addons/templatesets/" + folder))
-			{
-				std::filesystem::remove_all("addons/templatesets/" + folder);
+			if (folder.size() > 1) {
+				if (std::filesystem::exists("addons/templatesets/" + folder))
+				{
+					std::filesystem::remove_all("addons/templatesets/" + folder);
+				}
+				std::filesystem::copy("addons/arcdps/arcdps.templates", "addons/templatesets/" + folder, std::filesystem::copy_options::recursive);
+				memset(&setNameBuf[0], 0, sizeof(setNameBufSize));
+				rebuildSets();
 			}
-			std::filesystem::copy("addons/arcdps/arcdps.templates", "addons/templatesets/" + folder, std::filesystem::copy_options::recursive);
-			memset(&setNameBuf[0], 0, sizeof(setNameBufSize));
-			rebuildSets();
 		}
 
 		ImGui::Spacing();
