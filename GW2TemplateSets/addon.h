@@ -60,7 +60,6 @@ typedef struct ag {
 } ag;
 
 arcdps_exports arc_exports;
-char* arcvers;
 extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9* id3dd9);
 extern "C" __declspec(dllexport) void* get_release_addr();
 arcdps_exports* mod_init();

@@ -6,17 +6,15 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ulReasonForCall, LPVOID lpReserved)
 	return 1;
 }
 
-extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9* id3dd9) 
+extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9*) 
 {
-	arcvers = arcversionstr;
 	ImGui::SetCurrentContext(static_cast<ImGuiContext*>(imguicontext));
-	return static_cast<void*>(mod_init);
+	return reinterpret_cast<void*>(mod_init);
 }
 
 extern "C" __declspec(dllexport) void* get_release_addr() 
 {
-	arcvers = 0;
-	return static_cast<void*>(mod_release);
+	return reinterpret_cast<void*>(mod_release);
 }
 
 
@@ -67,16 +65,16 @@ arcdps_exports* mod_init()
 
 	setNameBufSize = 32;
 	setNameBuf = new char[setNameBufSize];
-	memset(&setNameBuf[0], 0, sizeof(setNameBufSize));
+	memset(&setNameBuf[0], 0, sizeof setNameBufSize);
 
 	memset(&arc_exports, 0, sizeof(arcdps_exports));
 	arc_exports.sig = 0xC0AA;
 	arc_exports.size = sizeof(arcdps_exports);
 	arc_exports.out_name = "templatesets";
 	arc_exports.out_build = "0.7";
-	arc_exports.wnd_filter = static_cast<void*>(mod_wnd_filter);
-	arc_exports.wnd_nofilter = static_cast<void*>(mod_wnd_nofilter);
-	arc_exports.imgui = static_cast<void*>(mod_imgui);
+	arc_exports.wnd_filter = reinterpret_cast<void*>(mod_wnd_filter);
+	arc_exports.wnd_nofilter = reinterpret_cast<void*>(mod_wnd_nofilter);
+	arc_exports.imgui = reinterpret_cast<void*>(mod_imgui);
 	return &arc_exports;
 }
 
@@ -85,7 +83,7 @@ uintptr_t mod_release()
 	return 0;
 }
 
-uintptr_t mod_wnd_filter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
+uintptr_t mod_wnd_filter(HWND, UINT uMsg, WPARAM wParam, LPARAM) 
 {
 	if (uMsg == WM_SYSKEYDOWN && wParam == 0x51)
 	{
@@ -96,7 +94,7 @@ uintptr_t mod_wnd_filter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	return uMsg;
 }
 
-uintptr_t mod_wnd_nofilter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+uintptr_t mod_wnd_nofilter(HWND, UINT uMsg, WPARAM wParam, LPARAM) {
 
 	switch(uMsg) {
 	case WM_KEYDOWN:
@@ -121,20 +119,20 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 		}
 
 		if(ImGui::Button("Load") && !directoryStrings.empty()) {
-			std::string folder = std::string(directories[selected]);
+			const std::string folder = std::string(directories[selected]);
 			std::filesystem::remove_all("addons/arcdps/arcdps.templates/");
 			std::filesystem::copy("addons/templatesets/" + folder, "addons/arcdps/arcdps.templates", std::filesystem::copy_options::recursive);
 		}
 		ImGui::SameLine();
 		if(ImGui::Button("Overwrite") && !directoryStrings.empty()) {
-			std::string folder = std::string(directories[selected]);
+			const std::string folder = std::string(directories[selected]);
 			std::filesystem::remove_all("addons/templatesets/" + folder);
 			std::filesystem::copy("addons/arcdps/arcdps.templates", "addons/templatesets/" + folder, std::filesystem::copy_options::recursive);
 			rebuildSets();
 		}
 		ImGui::SameLine();
 		if(ImGui::Button("Delete") && !directoryStrings.empty()) {
-			std::string folder = std::string(directories[selected]);
+			const std::string folder = std::string(directories[selected]);
 			std::filesystem::remove_all("addons/templatesets/" + folder);
 			rebuildSets();
 		}
