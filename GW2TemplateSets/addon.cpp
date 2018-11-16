@@ -9,14 +9,14 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ulReasonForCall, LPVOID lpReserved)
 extern "C" __declspec(dllexport) void* get_init_addr(char* arcversionstr, void* imguicontext, IDirect3DDevice9* id3dd9) 
 {
 	arcvers = arcversionstr;
-	ImGui::SetCurrentContext((ImGuiContext*)imguicontext);
-	return mod_init;
+	ImGui::SetCurrentContext(static_cast<ImGuiContext*>(imguicontext));
+	return static_cast<void*>(mod_init);
 }
 
 extern "C" __declspec(dllexport) void* get_release_addr() 
 {
 	arcvers = 0;
-	return mod_release;
+	return static_cast<void*>(mod_release);
 }
 
 
@@ -42,7 +42,7 @@ void rebuildSets()
 	directoryStrings = get_directories("addons/templatesets");
 	count = directoryStrings.size();
 	directories = new const char*[count];
-	for (int i = 0; i < count; ++i)
+	for (size_t i = 0; i < count; ++i)
 	{
 		directories[i] = directoryStrings[i].c_str();
 	}
@@ -74,9 +74,9 @@ arcdps_exports* mod_init()
 	arc_exports.size = sizeof(arcdps_exports);
 	arc_exports.out_name = "templatesets";
 	arc_exports.out_build = "0.7";
-	arc_exports.wnd_filter = mod_wnd_filter;
-	arc_exports.wnd_nofilter = mod_wnd_nofilter;
-	arc_exports.imgui = mod_imgui;
+	arc_exports.wnd_filter = static_cast<void*>(mod_wnd_filter);
+	arc_exports.wnd_nofilter = static_cast<void*>(mod_wnd_nofilter);
+	arc_exports.imgui = static_cast<void*>(mod_imgui);
 	return &arc_exports;
 }
 
@@ -87,18 +87,12 @@ uintptr_t mod_release()
 
 uintptr_t mod_wnd_filter(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 {
-
-	switch (uMsg)
+	if (uMsg == WM_SYSKEYDOWN && wParam == 0x51)
 	{
-	case WM_SYSKEYDOWN:
-		if(wParam == 0x51) {
-			windowVisible = !windowVisible;
-			return 0;
-		}
-		break;
-	default:
-		break;
+		windowVisible = !windowVisible;
+		return 0;
 	}
+
 	return uMsg;
 }
 
@@ -174,7 +168,7 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 			ImGui::OpenPopup("Confirm");
 		}
 
-		if(ImGui::BeginPopupModal("Confirm", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
+		if(ImGui::BeginPopupModal("Confirm", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 			ImGui::Text("Are you sure you want to clear ArcDPS buildtemplate folder?");
 			if(ImGui::Button("Yes")) {
 				std::filesystem::remove_all("addons/arcdps/arcdps.templates/");
