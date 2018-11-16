@@ -1,8 +1,26 @@
 #include "addon.h"
 #include "imgui_internal.h"
 
+std::filesystem::path exePath;
+
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD ulReasonForCall, LPVOID lpReserved) 
 {
+	wchar_t path[2048];
+	std::wstring ws;
+	switch(ulReasonForCall) {
+	case DLL_PROCESS_ATTACH: 		
+		GetModuleFileName(nullptr, &path[0], 2048);
+		ws = std::wstring(path);
+		exePath = std::string(ws.begin(), ws.end());
+		break;
+	case DLL_THREAD_ATTACH:  
+		GetModuleFileName(nullptr, &path[0], 2048);
+		ws = std::wstring(path);
+		exePath = std::string(ws.begin(), ws.end());
+		break;
+	case DLL_THREAD_DETACH:  break;
+	case DLL_PROCESS_DETACH:  break;
+	}
 	return 1;
 }
 
@@ -35,9 +53,16 @@ size_t setNameBufSize;
 bool modifier;
 bool modifierLShift;
 
+std::string buildPath(std::string path)
+{
+	std::filesystem::path buildPath = exePath.parent_path();
+	buildPath /= path;
+	return buildPath.string();
+}
+
 void rebuildSets()
 {
-	directoryStrings = get_directories("addons/templatesets");
+	directoryStrings = get_directories(buildPath("addons\\templatesets"));
 	count = directoryStrings.size();
 	directories = new const char*[count];
 	for (size_t i = 0; i < count; ++i)
@@ -52,13 +77,13 @@ arcdps_exports* mod_init()
 	windowVisible = false;
 
 
-	if(!std::filesystem::exists("addons/")) {
-		std::filesystem::create_directory("addons/templatesets/");
+	if(!std::filesystem::exists(buildPath("addons"))) {
+		std::filesystem::create_directory(buildPath("addons\\templatesets\\"));
 	}
 
-	if (!std::filesystem::exists("addons/templatesets/"))
+	if (!std::filesystem::exists(buildPath("addons\\templatesets\\")))
 	{
-		std::filesystem::create_directory("addons/templatesets/");
+		std::filesystem::create_directory(buildPath("addons\\templatesets\\"));
 	}
 
 	rebuildSets();
@@ -115,20 +140,20 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 
 		if(ImGui::Button("Load") && !directoryStrings.empty()) {
 			const auto folder = std::string(directories[selected]);
-			std::filesystem::remove_all("addons/arcdps/arcdps.templates/");
-			std::filesystem::copy("addons/templatesets/" + folder, "addons/arcdps/arcdps.templates", std::filesystem::copy_options::recursive);
+			std::filesystem::remove_all(buildPath("addons\\arcdps\\arcdps.templates\\"));
+			std::filesystem::copy(buildPath("addons\\templatesets\\") + folder, buildPath("addons\\arcdps\\arcdps.templates"), std::filesystem::copy_options::recursive);
 		}
 		ImGui::SameLine();
 		if(ImGui::Button("Overwrite") && !directoryStrings.empty()) {
 			const auto folder = std::string(directories[selected]);
-			std::filesystem::remove_all("addons/templatesets/" + folder);
-			std::filesystem::copy("addons/arcdps/arcdps.templates", "addons/templatesets/" + folder, std::filesystem::copy_options::recursive);
+			std::filesystem::remove_all(buildPath("addons\\templatesets\\") + folder);
+			std::filesystem::copy(buildPath("addons\\arcdps\\arcdps.templates"), buildPath("addons\\templatesets\\") + folder, std::filesystem::copy_options::recursive);
 			rebuildSets();
 		}
 		ImGui::SameLine();
 		if(ImGui::Button("Delete") && !directoryStrings.empty()) {
 			const auto folder = std::string(directories[selected]);
-			std::filesystem::remove_all("addons/templatesets/" + folder);
+			std::filesystem::remove_all(buildPath("addons\\templatesets\\") + folder);
 			rebuildSets();
 		}
 
@@ -143,11 +168,11 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 		{
 			auto folder = std::string(setNameBuf);
 			if (folder.size() > 1) {
-				if (std::filesystem::exists("addons/templatesets/" + folder))
+				if (std::filesystem::exists(buildPath("addons\\templatesets\\") + folder))
 				{
-					std::filesystem::remove_all("addons/templatesets/" + folder);
+					std::filesystem::remove_all(buildPath("addons\\templatesets\\") + folder);
 				}
-				std::filesystem::copy("addons/arcdps/arcdps.templates", "addons/templatesets/" + folder, std::filesystem::copy_options::recursive);
+				std::filesystem::copy(buildPath("addons\\arcdps\\arcdps.templates"), buildPath("addons\\templatesets\\") + folder, std::filesystem::copy_options::recursive);
 				memset(&setNameBuf[0], 0, sizeof setNameBufSize);
 				rebuildSets();
 			}
@@ -164,7 +189,7 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 		if(ImGui::BeginPopupModal("Confirm", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 			ImGui::Text("Are you sure you want to clear ArcDPS buildtemplate folder?");
 			if(ImGui::Button("Yes")) {
-				std::filesystem::remove_all("addons/arcdps/arcdps.templates/");
+				std::filesystem::remove_all(buildPath("addons\\arcdps\\arcdps.templates\\"));
 				ImGui::CloseCurrentPopup();
 			}
 			if(ImGui::Button("No")) {
