@@ -132,7 +132,7 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 		ImGui::Begin("Template Sets", &windowVisible, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse );
 
 		if (!directoryStrings.empty()) {
-			ImGui::ListBox("", &selected, directories, IM_ARRAYSIZE(directories));
+			ImGui::ListBox("", &selected, directories, directoryStrings.size());
 		}
 
 		if(ImGui::Button("Load") && !directoryStrings.empty()) {
