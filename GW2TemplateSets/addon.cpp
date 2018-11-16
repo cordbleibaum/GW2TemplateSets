@@ -6,17 +6,14 @@ std::filesystem::path exePath;
 BOOL APIENTRY DllMain(HANDLE hModule, DWORD ulReasonForCall, LPVOID lpReserved) 
 {
 	wchar_t path[2048];
-	std::wstring pathString;
 	switch(ulReasonForCall) {
 	case DLL_PROCESS_ATTACH: 		
 		GetModuleFileName(nullptr, &path[0], 2048);
-		pathString = std::wstring(path);
-		exePath = pathString;
+		exePath = std::wstring(path);
 		break;
 	case DLL_THREAD_ATTACH:  
 		GetModuleFileName(nullptr, &path[0], 2048);
-		pathString = std::wstring(path);
-		exePath = pathString;
+		exePath = std::wstring(path);
 		break;
 	case DLL_THREAD_DETACH:  break;
 	case DLL_PROCESS_DETACH:  break;
