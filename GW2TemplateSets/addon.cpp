@@ -95,16 +95,11 @@ uintptr_t mod_wnd_filter(HWND, UINT uMsg, WPARAM wParam, LPARAM)
 }
 
 uintptr_t mod_wnd_nofilter(HWND, UINT uMsg, WPARAM wParam, LPARAM) {
-
-	switch(uMsg) {
-	case WM_KEYDOWN:
-		if(wParam == VK_ESCAPE) {
-			windowVisible = false;
-		}
-		break;
-	default:
-		break;
+	if (uMsg == WM_KEYDOWN && wParam == VK_ESCAPE) 
+	{
+		windowVisible = false;
 	}
+
 	return uMsg;
 }
 
@@ -119,20 +114,20 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 		}
 
 		if(ImGui::Button("Load") && !directoryStrings.empty()) {
-			const std::string folder = std::string(directories[selected]);
+			const auto folder = std::string(directories[selected]);
 			std::filesystem::remove_all("addons/arcdps/arcdps.templates/");
 			std::filesystem::copy("addons/templatesets/" + folder, "addons/arcdps/arcdps.templates", std::filesystem::copy_options::recursive);
 		}
 		ImGui::SameLine();
 		if(ImGui::Button("Overwrite") && !directoryStrings.empty()) {
-			const std::string folder = std::string(directories[selected]);
+			const auto folder = std::string(directories[selected]);
 			std::filesystem::remove_all("addons/templatesets/" + folder);
 			std::filesystem::copy("addons/arcdps/arcdps.templates", "addons/templatesets/" + folder, std::filesystem::copy_options::recursive);
 			rebuildSets();
 		}
 		ImGui::SameLine();
 		if(ImGui::Button("Delete") && !directoryStrings.empty()) {
-			const std::string folder = std::string(directories[selected]);
+			const auto folder = std::string(directories[selected]);
 			std::filesystem::remove_all("addons/templatesets/" + folder);
 			rebuildSets();
 		}
@@ -146,14 +141,14 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 
 		if (ImGui::Button("Save"))
 		{
-			std::string folder = std::string(setNameBuf);
+			auto folder = std::string(setNameBuf);
 			if (folder.size() > 1) {
 				if (std::filesystem::exists("addons/templatesets/" + folder))
 				{
 					std::filesystem::remove_all("addons/templatesets/" + folder);
 				}
 				std::filesystem::copy("addons/arcdps/arcdps.templates", "addons/templatesets/" + folder, std::filesystem::copy_options::recursive);
-				memset(&setNameBuf[0], 0, sizeof(setNameBufSize));
+				memset(&setNameBuf[0], 0, sizeof setNameBufSize);
 				rebuildSets();
 			}
 		}
