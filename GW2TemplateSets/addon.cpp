@@ -53,6 +53,11 @@ arcdps_exports* mod_init()
 {
 	windowVisible = false;
 
+
+	if(!std::filesystem::exists("addons/")) {
+		std::filesystem::create_directory("addons/templatesets/");
+	}
+
 	if (!std::filesystem::exists("addons/templatesets/"))
 	{
 		std::filesystem::create_directory("addons/templatesets/");
