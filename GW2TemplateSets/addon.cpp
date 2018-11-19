@@ -168,7 +168,7 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 		if (ImGui::Button("Save"))
 		{
 			auto folder = std::string(setNameBuf);
-			if (std::regex_match(folder, std::regex(R"(^[^\w./:<>*?\\][^/:<>^*?\\]+$)")))
+			if (std::regex_match(folder, std::regex(R"(^[^ ./:<>*?\\][^/:<>^*?\\]+$)")))
 			{
 				const auto folderWS = std::wstring(folder.begin(), folder.end());
 
@@ -193,6 +193,7 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 			ImGui::Text("Are you sure you want to clear ArcDPS buildtemplate folder?");
 			if(ImGui::Button("Yes")) {
 				std::filesystem::remove_all(buildPath(L"addons\\arcdps\\arcdps.templates\\"));
+				std::filesystem::create_directory(buildPath(L"addons\\arcdps\\arcdps.templates\\"));
 				ImGui::CloseCurrentPopup();
 			}
 			if(ImGui::Button("No")) {
