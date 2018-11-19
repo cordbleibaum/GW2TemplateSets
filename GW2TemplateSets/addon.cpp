@@ -1,5 +1,6 @@
 #include "addon.h"
 #include "imgui_internal.h"
+#include <regex>
 
 std::filesystem::path exePath;
 
@@ -167,10 +168,11 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 		if (ImGui::Button("Save"))
 		{
 			auto folder = std::string(setNameBuf);
-			const auto folderWS = std::wstring(folder.begin(), folder.end());
-			if (folder.size() > 1) {
-				if (std::filesystem::exists(buildPath(L"addons\\templatesets\\") + std::wstring(folder.begin(), folder.end())))
-				{
+			if (std::regex_match(folder, std::regex(R"(^[^\w./:<>*?\\][^/:<>^*?\\]+$)")))
+			{
+				const auto folderWS = std::wstring(folder.begin(), folder.end());
+
+				if(std::filesystem::exists(buildPath(L"addons\\templatesets\\") + std::wstring(folder.begin(), folder.end()))) {
 					std::filesystem::remove_all(buildPath(L"addons\\templatesets\\") + std::wstring(folder.begin(), folder.end()));
 				}
 				std::filesystem::copy(buildPath(L"addons\\arcdps\\arcdps.templates"), buildPath(L"addons\\templatesets\\") + folderWS, std::filesystem::copy_options::recursive);
