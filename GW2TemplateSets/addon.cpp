@@ -1,6 +1,8 @@
 #include "addon.h"
 #include "imgui_internal.h"
 #include <regex>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
 
 std::filesystem::path exePath;
 
@@ -51,6 +53,17 @@ size_t setNameBufSize;
 bool modifier;
 bool modifierLShift;
 
+std::string currentName;
+
+boost::property_tree::ptree properties;
+
+std::string configPath()
+{
+	std::filesystem::path buildPath = exePath.parent_path();
+	buildPath /= "settings.json";
+	return buildPath.string();
+}
+
 std::wstring buildPath(std::wstring path)
 {
 	std::filesystem::path buildPath = exePath.parent_path();
@@ -67,13 +80,25 @@ void rebuildSets()
 	{
 		directories[i] = directoryStrings[i].c_str();
 	}
-	selected = 0;
+
+	if (static_cast<size_t>(selected) >= count)
+	{
+		selected = 0;
+	}
+}
+
+void selectByName(const std::string name) {
+	const auto iterator = std::find(directoryStrings.begin(), directoryStrings.end(), name);
+	if(iterator != directoryStrings.end()) {
+		selected = std::distance(directoryStrings.begin(), iterator);
+	}
 }
 
 arcdps_exports* mod_init() 
 {
 	windowVisible = false;
 
+	selected = 0;
 
 	if(!std::filesystem::exists(buildPath(L"addons"))) {
 		std::filesystem::create_directory(buildPath(L"addons\\templatesets\\"));
@@ -85,6 +110,10 @@ arcdps_exports* mod_init()
 	}
 
 	rebuildSets();
+
+	boost::property_tree::read_json(configPath(), properties);
+	auto currentSet = properties.get<std::string>("currentSet", ".");
+	selectByName(currentSet);
 
 	setNameBufSize = 32;
 	setNameBuf = new char[setNameBufSize];
@@ -126,7 +155,7 @@ uintptr_t mod_wnd_nofilter(HWND, UINT uMsg, WPARAM wParam, LPARAM) {
 	return uMsg;
 }
 
-uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
+uintptr_t mod_imgui(uint32_t)
 {
 	if (windowVisible)
 	{
@@ -141,6 +170,8 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 			const auto folderWS = std::wstring(folder.begin(), folder.end());
 			std::filesystem::remove_all(buildPath(L"addons\\arcdps\\arcdps.templates\\"));
 			std::filesystem::copy(buildPath(L"addons\\templatesets\\") + folderWS, buildPath(L"addons\\arcdps\\arcdps.templates"), std::filesystem::copy_options::recursive);
+			properties.put<std::string>("currentSet", folder);
+			boost::property_tree::write_json(configPath(), properties);
 		}
 		ImGui::SameLine();
 		if(ImGui::Button("Overwrite") && !directoryStrings.empty()) {
@@ -149,6 +180,9 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 			std::filesystem::remove_all(buildPath(L"addons\\templatesets\\") + folderWS);
 			std::filesystem::copy(buildPath(L"addons\\arcdps\\arcdps.templates"), buildPath(L"addons\\templatesets\\") + folderWS, std::filesystem::copy_options::recursive);
 			rebuildSets();
+			selectByName(folder);
+			properties.put<std::string>("currentSet", folder);
+			boost::property_tree::write_json(configPath(), properties);
 		}
 		ImGui::SameLine();
 		if(ImGui::Button("Delete") && !directoryStrings.empty()) {
@@ -177,7 +211,11 @@ uintptr_t mod_imgui(uint32_t not_charsel_or_loading)
 				}
 				std::filesystem::copy(buildPath(L"addons\\arcdps\\arcdps.templates"), buildPath(L"addons\\templatesets\\") + folderWS, std::filesystem::copy_options::recursive);
 				memset(&setNameBuf[0], 0, sizeof setNameBufSize);
+				currentName = folder;
 				rebuildSets();
+				selectByName(folder);
+				properties.put<std::string>("currentSet", folder);
+				boost::property_tree::write_json(configPath(), properties);
 			}
 		}
 
