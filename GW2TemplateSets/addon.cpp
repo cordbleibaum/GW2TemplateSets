@@ -60,7 +60,9 @@ boost::property_tree::ptree properties;
 std::string configPath()
 {
 	std::filesystem::path buildPath = exePath.parent_path();
-	buildPath /= "settings.json";
+	buildPath /= L"addons";
+	buildPath /= L"templatesets";
+	buildPath /= L"settings.json";
 	return buildPath.string();
 }
 
@@ -111,7 +113,17 @@ arcdps_exports* mod_init()
 
 	rebuildSets();
 
+	if (!std::filesystem::exists(configPath()))
+	{
+		std::fstream configFile;
+		configFile.open(configPath(), std::fstream::out);
+		configFile << "{}";
+		configFile.close();
+	}
+
+
 	boost::property_tree::read_json(configPath(), properties);
+	
 	auto currentSet = properties.get<std::string>("currentSet", ".");
 	selectByName(currentSet);
 
