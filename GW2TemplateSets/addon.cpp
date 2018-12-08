@@ -46,9 +46,11 @@ bool windowVisible = false;
 
 TemplateSetList templates;
 int selected;
+bool autosave;
 
 char* setNameBuf;
 size_t setNameBufSize;
+std::string currentSetName;
 
 bool modifier;
 bool modifierLShift;
@@ -64,9 +66,11 @@ arcdps_exports* mod_init()
 
 	templates = TemplateSetList(exePath);
 	boost::property_tree::read_json(configPath(exePath), properties);
-	
-	auto currentSet = properties.get<std::string>("currentSet", ".");
-	selected = templates.find(templates[selected]);
+
+	const auto currentSet = properties.get<std::string>("currentSet", ".");
+	selected = templates.find(currentSet);
+
+	autosave = properties.get<bool>("autosave", false);
 
 	setNameBufSize = 32;
 	setNameBuf = new char[setNameBufSize];
@@ -118,19 +122,26 @@ uintptr_t mod_imgui(uint32_t)
 			ImGui::ListBox("", &selected, templates.directories(), templates.count());
 
 			if(ImGui::Button("Load")) {
+				if (autosave && !currentSetName.empty())
+				{
+					templates.overwrite(currentSetName);
+				}
 				templates.load(selected);
 				properties.put<std::string>("currentSet", templates[selected]);
 				boost::property_tree::write_json(configPath(exePath), properties);
+				currentSetName = templates[selected];
 			}
 			ImGui::SameLine();
 			if(ImGui::Button("Overwrite")) {
 				templates.overwrite(selected);
 				properties.put<std::string>("currentSet", templates[selected]);
 				boost::property_tree::write_json(configPath(exePath), properties);
+				currentSetName = templates[selected];
 			}
 			ImGui::SameLine();
 			if(ImGui::Button("Delete")) {
 				templates.remove(selected);
+				currentSetName = "";
 			}
 		}
 
@@ -150,6 +161,7 @@ uintptr_t mod_imgui(uint32_t)
 				selected = templates.find(folder);
 				properties.put<std::string>("currentSet", folder);
 				boost::property_tree::write_json(configPath(exePath), properties);
+				currentSetName = folder;
 			}
 		}
 
@@ -159,6 +171,15 @@ uintptr_t mod_imgui(uint32_t)
 
 		if(ImGui::Button("Clear")) {
 			ImGui::OpenPopup("Confirm");
+		}
+
+		bool autosaveLocal = autosave;
+		ImGui::Checkbox("Autosave", &autosaveLocal);
+		if (autosaveLocal != autosave)
+		{
+			autosave = autosaveLocal;
+			properties.put<bool>("autosave", autosave);
+			boost::property_tree::write_json(configPath(exePath), properties);
 		}
 
 		if(ImGui::BeginPopupModal("Confirm", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
