@@ -159,6 +159,7 @@
     <ClCompile Include="addon.cpp" />
     <ClCompile Include="imgui.cpp" />
     <ClCompile Include="imgui_draw.cpp" />
+    <ClCompile Include="templateSets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addon.h" />
@@ -168,6 +169,7 @@
     <ClInclude Include="stb_rect_pack.h" />
     <ClInclude Include="stb_textedit.h" />
     <ClInclude Include="stb_truetype.h" />
+    <ClInclude Include="templateSets.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

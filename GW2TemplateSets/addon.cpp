@@ -3,6 +3,7 @@
 #include <regex>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
+#include "templateSets.h"
 
 std::filesystem::path exePath;
 
@@ -179,18 +180,14 @@ uintptr_t mod_imgui(uint32_t)
 
 		if(ImGui::Button("Load") && !directoryStrings.empty()) {
 			const auto folder = std::string(directories[selected]);
-			const auto folderWS = std::wstring(folder.begin(), folder.end());
-			std::filesystem::remove_all(buildPath(L"addons\\arcdps\\arcdps.templates\\"));
-			std::filesystem::copy(buildPath(L"addons\\templatesets\\") + folderWS, buildPath(L"addons\\arcdps\\arcdps.templates"), std::filesystem::copy_options::recursive);
+			load(exePath, folder);
 			properties.put<std::string>("currentSet", folder);
 			boost::property_tree::write_json(configPath(), properties);
 		}
 		ImGui::SameLine();
 		if(ImGui::Button("Overwrite") && !directoryStrings.empty()) {
 			const auto folder = std::string(directories[selected]);
-			const auto folderWS = std::wstring(folder.begin(), folder.end());
-			std::filesystem::remove_all(buildPath(L"addons\\templatesets\\") + folderWS);
-			std::filesystem::copy(buildPath(L"addons\\arcdps\\arcdps.templates"), buildPath(L"addons\\templatesets\\") + folderWS, std::filesystem::copy_options::recursive);
+			overwrite(exePath, folder);
 			rebuildSets();
 			selectByName(folder);
 			properties.put<std::string>("currentSet", folder);
@@ -199,8 +196,7 @@ uintptr_t mod_imgui(uint32_t)
 		ImGui::SameLine();
 		if(ImGui::Button("Delete") && !directoryStrings.empty()) {
 			const auto folder = std::string(directories[selected]);
-			const auto folderWS = std::wstring(folder.begin(), folder.end());
-			std::filesystem::remove_all(buildPath(L"addons\\templatesets\\") + folderWS);
+			remove(exePath, folder);
 			rebuildSets();
 		}
 
@@ -213,15 +209,9 @@ uintptr_t mod_imgui(uint32_t)
 
 		if (ImGui::Button("Save"))
 		{
-			auto folder = std::string(setNameBuf);
-			if (std::regex_match(folder, std::regex(R"(^[^ ./:<>*?\\][^/:<>^*?\\]+$)")))
+			const auto folder = std::string(setNameBuf);
+			if (save(exePath, folder))
 			{
-				const auto folderWS = std::wstring(folder.begin(), folder.end());
-
-				if(std::filesystem::exists(buildPath(L"addons\\templatesets\\") + std::wstring(folder.begin(), folder.end()))) {
-					std::filesystem::remove_all(buildPath(L"addons\\templatesets\\") + std::wstring(folder.begin(), folder.end()));
-				}
-				std::filesystem::copy(buildPath(L"addons\\arcdps\\arcdps.templates"), buildPath(L"addons\\templatesets\\") + folderWS, std::filesystem::copy_options::recursive);
 				memset(&setNameBuf[0], 0, sizeof setNameBufSize);
 				currentName = folder;
 				rebuildSets();
