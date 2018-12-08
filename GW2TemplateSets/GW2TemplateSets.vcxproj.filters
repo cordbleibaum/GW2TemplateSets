@@ -27,6 +27,9 @@
     <ClCompile Include="templateSets.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="paths.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="addon.h">
@@ -50,10 +53,10 @@
     <ClInclude Include="stb_truetype.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="util.h">
+    <ClInclude Include="templateSets.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="templateSets.h">
+    <ClInclude Include="paths.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

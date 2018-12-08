@@ -4,6 +4,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include "templateSets.h"
+#include "paths.h"
 
 std::filesystem::path exePath;
 
@@ -43,9 +44,7 @@ extern "C" __declspec(dllexport) void* get_release_addr()
 
 bool windowVisible = false;
 
-std::vector<std::string> directoryStrings;
-const char** directories;
-size_t count;
+TemplateSetList templates;
 int selected;
 
 char* setNameBuf;
@@ -54,79 +53,20 @@ size_t setNameBufSize;
 bool modifier;
 bool modifierLShift;
 
-std::string currentName;
-
 boost::property_tree::ptree properties;
-
-std::string configPath()
-{
-	std::filesystem::path buildPath = exePath.parent_path();
-	buildPath /= L"addons";
-	buildPath /= L"templatesets";
-	buildPath /= L"settings.json";
-	return buildPath.string();
-}
-
-std::wstring buildPath(std::wstring path)
-{
-	std::filesystem::path buildPath = exePath.parent_path();
-	buildPath /= path;
-	return buildPath.wstring();
-}
-
-void rebuildSets()
-{
-	directoryStrings = get_directories(buildPath(L"addons\\templatesets"));
-	count = directoryStrings.size();
-	directories = new const char*[count];
-	for (size_t i = 0; i < count; ++i)
-	{
-		directories[i] = directoryStrings[i].c_str();
-	}
-
-	if (static_cast<size_t>(selected) >= count)
-	{
-		selected = 0;
-	}
-}
-
-void selectByName(const std::string name) {
-	const auto iterator = std::find(directoryStrings.begin(), directoryStrings.end(), name);
-	if(iterator != directoryStrings.end()) {
-		selected = std::distance(directoryStrings.begin(), iterator);
-	}
-}
 
 arcdps_exports* mod_init() 
 {
 	windowVisible = false;
+	selected = 5;
 
-	selected = 0;
+	initPaths(exePath);
 
-	if(!std::filesystem::exists(buildPath(L"addons"))) {
-		std::filesystem::create_directory(buildPath(L"addons\\templatesets\\"));
-	}
-
-	if (!std::filesystem::exists(buildPath(L"addons\\templatesets\\")))
-	{
-		std::filesystem::create_directory(buildPath(L"addons\\templatesets\\"));
-	}
-
-	rebuildSets();
-
-	if (!std::filesystem::exists(configPath()))
-	{
-		std::fstream configFile;
-		configFile.open(configPath(), std::fstream::out);
-		configFile << "{}";
-		configFile.close();
-	}
-
-
-	boost::property_tree::read_json(configPath(), properties);
+	templates = TemplateSetList(exePath);
+	boost::property_tree::read_json(configPath(exePath), properties);
 	
 	auto currentSet = properties.get<std::string>("currentSet", ".");
-	selectByName(currentSet);
+	selected = templates.find(templates[selected]);
 
 	setNameBufSize = 32;
 	setNameBuf = new char[setNameBufSize];
@@ -174,30 +114,24 @@ uintptr_t mod_imgui(uint32_t)
 	{
 		ImGui::Begin("Template Sets", &windowVisible, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoCollapse );
 
-		if (!directoryStrings.empty()) {
-			ImGui::ListBox("", &selected, directories, directoryStrings.size());
-		}
+		if (!templates.empty()) {
+			ImGui::ListBox("", &selected, templates.directories(), templates.count());
 
-		if(ImGui::Button("Load") && !directoryStrings.empty()) {
-			const auto folder = std::string(directories[selected]);
-			load(exePath, folder);
-			properties.put<std::string>("currentSet", folder);
-			boost::property_tree::write_json(configPath(), properties);
-		}
-		ImGui::SameLine();
-		if(ImGui::Button("Overwrite") && !directoryStrings.empty()) {
-			const auto folder = std::string(directories[selected]);
-			overwrite(exePath, folder);
-			rebuildSets();
-			selectByName(folder);
-			properties.put<std::string>("currentSet", folder);
-			boost::property_tree::write_json(configPath(), properties);
-		}
-		ImGui::SameLine();
-		if(ImGui::Button("Delete") && !directoryStrings.empty()) {
-			const auto folder = std::string(directories[selected]);
-			remove(exePath, folder);
-			rebuildSets();
+			if(ImGui::Button("Load")) {
+				templates.load(selected);
+				properties.put<std::string>("currentSet", templates[selected]);
+				boost::property_tree::write_json(configPath(exePath), properties);
+			}
+			ImGui::SameLine();
+			if(ImGui::Button("Overwrite")) {
+				templates.overwrite(selected);
+				properties.put<std::string>("currentSet", templates[selected]);
+				boost::property_tree::write_json(configPath(exePath), properties);
+			}
+			ImGui::SameLine();
+			if(ImGui::Button("Delete")) {
+				templates.remove(selected);
+			}
 		}
 
 		ImGui::Spacing();
@@ -210,14 +144,12 @@ uintptr_t mod_imgui(uint32_t)
 		if (ImGui::Button("Save"))
 		{
 			const auto folder = std::string(setNameBuf);
-			if (save(exePath, folder))
+			if (templates.save(folder))
 			{
 				memset(&setNameBuf[0], 0, sizeof setNameBufSize);
-				currentName = folder;
-				rebuildSets();
-				selectByName(folder);
+				selected = templates.find(folder);
 				properties.put<std::string>("currentSet", folder);
-				boost::property_tree::write_json(configPath(), properties);
+				boost::property_tree::write_json(configPath(exePath), properties);
 			}
 		}
 
@@ -232,8 +164,8 @@ uintptr_t mod_imgui(uint32_t)
 		if(ImGui::BeginPopupModal("Confirm", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
 			ImGui::Text("Are you sure you want to clear ArcDPS buildtemplate folder?");
 			if(ImGui::Button("Yes")) {
-				std::filesystem::remove_all(buildPath(L"addons\\arcdps\\arcdps.templates\\"));
-				std::filesystem::create_directory(buildPath(L"addons\\arcdps\\arcdps.templates\\"));
+				std::filesystem::remove_all(buildPath(exePath, L"addons\\arcdps\\arcdps.templates\\"));
+				std::filesystem::create_directory(buildPath(exePath, L"addons\\arcdps\\arcdps.templates\\"));
 				ImGui::CloseCurrentPopup();
 			}
 			if(ImGui::Button("No")) {

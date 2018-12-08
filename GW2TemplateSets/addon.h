@@ -4,7 +4,6 @@
 #include <Windows.h>
 #include <D3D9.h>
 
-#include "util.h"
 #include "imgui.h"
 
 typedef struct arcdps_exports {
