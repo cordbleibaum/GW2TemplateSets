@@ -58,7 +58,7 @@ boost::property_tree::ptree properties;
 arcdps_exports* mod_init() 
 {
 	windowVisible = false;
-	selected = 5;
+	selected = 0;
 
 	initPaths(exePath);
 
