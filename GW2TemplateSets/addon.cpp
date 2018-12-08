@@ -1,6 +1,6 @@
 #include "addon.h"
 #include "imgui_internal.h"
-#include <regex>
+
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include "templateSets.h"
@@ -76,7 +76,7 @@ arcdps_exports* mod_init()
 	arc_exports.sig = 0xC0AA;
 	arc_exports.size = sizeof(arcdps_exports);
 	arc_exports.out_name = "templatesets";
-	arc_exports.out_build = "0.7";
+	arc_exports.out_build = "0.8";
 	arc_exports.wnd_filter = reinterpret_cast<void*>(mod_wnd_filter);
 	arc_exports.wnd_nofilter = reinterpret_cast<void*>(mod_wnd_nofilter);
 	arc_exports.imgui = reinterpret_cast<void*>(mod_imgui);
