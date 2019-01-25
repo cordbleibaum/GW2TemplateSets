@@ -140,8 +140,11 @@ uintptr_t mod_imgui(uint32_t)
 			}
 			ImGui::SameLine();
 			if(ImGui::Button("Delete")) {
+				if (currentSetName == templates[selected])
+				{
+					currentSetName = "";
+				}
 				templates.remove(selected);
-				currentSetName = "";
 			}
 		}
 
