@@ -6,6 +6,7 @@ Copies ArcDPS buildtemplate folder into separate folders, and switches the conte
 
 #### Current Limitations:
 - You can't use most special chars in template set names, because the names are used as folder names at the moment
+- You have to reopen ArcDPS buildtemplates window after loading a set
 
 #### *This is not completely tested yet, you might loose buildtemplates if there is still a bug. And possibly in catastrophic cases more data (unlikely, but in theory possible, when deleting folders, that such a bug exists)*
 
